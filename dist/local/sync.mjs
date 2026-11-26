@@ -5,7 +5,7 @@ export class SyncEngine {
   this.channel=channelFactory('oka-sync:'+room.room_id+':'+actor);this.channel.onmessage=({data})=>{if(data.type==='typing'&&this.leader)this.sendTyping(data.enabled);else if(data.type==='hello'&&this.leader)this.announce();else if(data.type==='reconnect'&&this.leader)this.reconnect();else if(data.type==='state'&&!this.leader){this.state=data.state;onState(this.state);}};
   this.state={reason:'',status:'Connecting…',presence:null,typing:false};this.aborter=new AbortController();this.receiving=Promise.resolve();this.closed=false;this.busy=false;this.attempt=0;
  }
- async start(){this.onlineListener=()=>this.settingsChanged().catch(error=>this.onError(error.message));this.eventTarget?.addEventListener('online',this.onlineListener);this.unsubscribe=this.store.subscribe(()=>this.settingsChanged().catch(error=>this.onError(error.message)));this.channel.postMessage({type:'hello'});
+ async start(){this.onlineListener=()=>{if(this.leader&&!this.storageBlocked)this.reconnect().catch(error=>this.onError(error.message));};this.eventTarget?.addEventListener('online',this.onlineListener);this.unsubscribe=this.store.subscribe(()=>this.settingsChanged().catch(error=>this.onError(error.message)));this.channel.postMessage({type:'hello'});
   this.election=this.locks.request('oka-sync-owner:'+this.room.room_id+':'+this.actor,{signal:this.aborter.signal},async()=>{if(this.closed)return;this.leader=true;await this.settingsChanged();if(this.closed)return;await new Promise(resolve=>this.release=resolve);this.leader=false;}).catch(error=>{if(error.name!=='AbortError')this.onError(error.message);});
   return this;
  }

@@ -36,3 +36,9 @@ test('local snapshot failure pauses sync instead of repeatedly reconnecting',asy
  const errors=[];const engine=new SyncEngine({room_id:'room'},'a',store,{locks:lockManager(),Socket,request:async()=>{signIns++;return {token:'token'};},onError:error=>errors.push(error)});
  t.after(()=>engine.close());await engine.start();await until(()=>engine.state.status==='Sync paused');assert.equal(engine.retryTimer,null);assert.equal(signIns,1);assert.deepEqual(errors,['disk full']);assert.match(engine.state.reason,/saved messages are retained/);
 });
+
+test('browser online event retries immediately without waiting for backoff',async t=>{
+ environment(t);const events=new EventTarget(),stores=localStores(),store=await stores.open('room','a');let requests=0;
+ const engine=new SyncEngine({room_id:'room'},'a',store,{locks:lockManager(),Socket,eventTarget:events,request:async()=>{if(++requests===1)throw new Error('network unavailable');return {token:'token'};}});engine.attempt=5;
+ t.after(async()=>{await engine.close();await store.close();});await engine.start();await until(()=>engine.state.status==='Waiting for connection');events.dispatchEvent(new Event('online'));await until(()=>engine.state.status==='Connected');assert.equal(requests,2);
+});
