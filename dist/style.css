@@ -76,3 +76,41 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;padding-block:2
 .credentials div+div{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}
 .credentials dt{font-weight:650}
 .credentials dd{color:var(--muted)}
+
+/* Project gallery: two previews on desktop, one on narrow screens. */
+.project-carousel{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;gap:14px}
+.project-carousel .projects{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;min-width:0}
+.project-carousel .project{min-width:0;display:flex;flex-direction:column}
+.project-carousel .project[hidden]{display:none}
+.project-carousel .project-copy{flex:1}
+.carousel-arrow{width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:var(--paper);color:var(--ink);font-size:1.5rem;display:grid;place-items:center}
+.carousel-arrow:hover:enabled{border-color:var(--accent);background:var(--wash)}
+.carousel-arrow:disabled{opacity:.35;cursor:default}
+.carousel-status{text-align:center;color:var(--muted);font-size:.875rem;margin:18px 0 0}
+#maze-preview{display:grid;grid-template-columns:repeat(15,1fr);width:min(85%,300px);gap:2px}
+#maze-preview span{aspect-ratio:1;background:var(--paper);border-radius:1px}
+#maze-preview .wall{background:var(--muted);opacity:.6}
+#maze-preview .route{background:var(--accent)}
+#maze-preview .endpoint{background:#2a897b}
+#queens-preview{display:grid;grid-template-columns:repeat(8,1fr);width:168px;aspect-ratio:1;border:1px solid var(--line)}
+#queens-preview span{display:grid;place-items:center;background:var(--paper);color:var(--accent);font-size:1.1rem;line-height:1}
+#queens-preview .alt{background:var(--wash)}
+.booking-diagram{width:min(90%,340px);font-size:.875rem}
+.preview-slot{display:grid;text-align:center;gap:3px;margin:0 auto 24px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);position:relative}
+.preview-slot:after{content:"";position:absolute;height:24px;width:1px;background:var(--muted);bottom:-25px;left:50%}
+.preview-slot span,.preview-requests span{color:var(--muted)}
+.preview-requests{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.preview-requests div{display:grid;text-align:center;gap:4px;padding:10px 4px;background:var(--paper);border:1px solid var(--line);border-radius:8px}
+.preview-conflict{color:light-dark(#9b3939,#ffb3ab)}.preview-confirmed{color:light-dark(#216653,#82d9bc)}
+@media(max-width:600px){.project-carousel{grid-template-columns:36px minmax(0,1fr) 36px;gap:8px}.project-carousel .projects{grid-template-columns:1fr}.carousel-arrow{width:36px;height:44px}.project-carousel .project-copy{padding:16px}.preview-requests{grid-template-columns:1fr;gap:5px}.preview-slot{margin-bottom:12px}.preview-slot:after{height:12px;bottom:-13px}.preview-requests div{padding:5px}.booking-diagram{font-size:.875rem}}
+@media(prefers-reduced-motion:no-preference){.project-carousel .project:not([hidden]){animation:project-reveal .22s ease-out}@keyframes project-reveal{from{opacity:.4;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}}
+
+/* Keep all small board previews square while numbers and glyphs appear. */
+#board{grid-template-rows:repeat(9,minmax(0,1fr));grid-template-columns:repeat(9,minmax(0,1fr))}
+#board span{min-width:0;min-height:0;line-height:1}
+#queens-preview{grid-template-rows:repeat(8,minmax(0,1fr));grid-template-columns:repeat(8,minmax(0,1fr));overflow:hidden}
+#queens-preview span{min-width:0;min-height:0}
+.project-visual{flex-shrink:0}
+.cat-visual img{max-height:210px;object-fit:contain}
+
+.chat-preview-messages{display:grid;gap:12px;width:min(85%,320px)}.chat-preview-messages span{padding:12px 16px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-right:35px}.chat-preview-messages span+span{margin-left:35px;margin-right:0;background:var(--bg)}

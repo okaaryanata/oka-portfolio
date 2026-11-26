@@ -1,3 +1,6 @@
+import {mountSudoku} from './sudoku.mjs';
+import {mountCats} from './cats.mjs';
+import {mountChat} from './chat.mjs';
 import {findPath, queenSteps, createSlot} from './algorithms.mjs';
 import './theme.js';
 const byId=id=>document.getElementById(id);
@@ -45,12 +48,92 @@ byId('compare').addEventListener('click',async()=>{
   byId('maze-result').textContent=results.map(([name,{path,visited}])=>`${name}: ${path.length?`${path.length-1} moves`:'no route'}, ${visited.length} cells explored`).join('. ')+'.';
   byId('compare').disabled=false;
 });preset();
-let queensRun=0;
-function drawQueens(size,columns=[]){const board=byId('queens');board.style.gridTemplateColumns=`repeat(${size},1fr)`;board.setAttribute('aria-label',columns.length?columns.map((col,row)=>`Queen at row ${row+1}, column ${col+1}`).join('. '):`Empty ${size} by ${size} chessboard`);board.replaceChildren(...Array.from({length:size*size},(_,index)=>{const row=Math.floor(index/size),col=index%size;const square=document.createElement('span');square.className=`square${(row+col)%2?' alt':''}`;square.textContent=columns[row]===col?'♛':'';return square;}));}
-function resetQueens(){queensRun++;byId('solve-queens').disabled=false;drawQueens(Number(byId('size').value));byId('queens-result').textContent='Choose a board size and start the solver.';}
-byId('size').addEventListener('change',resetQueens);byId('reset-queens').addEventListener('click',resetQueens);
-byId('solve-queens').addEventListener('click',async()=>{const run=++queensRun,size=Number(byId('size').value);byId('solve-queens').disabled=true;byId('queens-result').textContent='Solving…';let final=[],steps=0;for(const columns of queenSteps(size)){if(run!==queensRun)return;final=columns;steps++;if(!reduced.matches){drawQueens(size,columns);await delay(25);}}if(run!==queensRun)return;drawQueens(size,final);byId('queens-result').textContent=final.length===size?`Solution found after ${steps} placement and backtracking steps.`:'No solution found.';byId('solve-queens').disabled=false;});resetQueens();
+let queensRun = 0;
+let queenSquares = [];
+function drawQueens(size, columns = []) {
+  const board = byId('queens');
+  board.style.gridTemplateColumns = `repeat(${size}, minmax(0, 1fr))`;
+  board.style.gridTemplateRows = `repeat(${size}, minmax(0, 1fr))`;
+  if (queenSquares.length !== size * size) {
+    queenSquares = Array.from({length: size * size}, (_, index) => {
+      const square = document.createElement('span');
+      square.className = `square${(Math.floor(index / size) + index % size) % 2 ? ' alt' : ''}`;
+      square.setAttribute('aria-hidden', 'true');
+      return square;
+    });
+    board.replaceChildren(...queenSquares);
+  }
+  queenSquares.forEach((square, index) => {
+    square.textContent = columns[Math.floor(index / size)] === index % size ? '♛' : '';
+  });
+  board.setAttribute('aria-label', columns.length
+    ? `${size} by ${size} chessboard. ` + columns.map((col, row) => `Queen at row ${row + 1}, column ${col + 1}`).join('. ')
+    : `Empty ${size} by ${size} chessboard`);
+}
+function resetQueens() {
+  queensRun++;
+  byId('solve-queens').disabled = false;
+  byId('queens').setAttribute('aria-busy', 'false');
+  drawQueens(Number(byId('size').value));
+  byId('queens-result').textContent = 'Choose a board size and start the solver.';
+}
+byId('size').addEventListener('change', resetQueens);
+byId('reset-queens').addEventListener('click', resetQueens);
+byId('solve-queens').addEventListener('click', async () => {
+  const run = ++queensRun;
+  const size = Number(byId('size').value);
+  byId('solve-queens').disabled = true;
+  byId('queens').setAttribute('aria-busy', 'true');
+  drawQueens(size);
+  byId('queens-result').textContent = 'Solving…';
+  let final = [], steps = 0;
+  try {
+    for (const columns of queenSteps(size)) {
+      if (run !== queensRun) return;
+      final = columns;
+      steps++;
+      drawQueens(size, columns);
+      if (!reduced.matches) await delay(25);
+    }
+    if (run !== queensRun) return;
+    drawQueens(size, final);
+    byId('queens-result').textContent = final.length === size
+      ? `Solution found after ${steps} placement and backtracking steps.` : 'No solution found.';
+  } finally {
+    if (run === queensRun) {
+      byId('solve-queens').disabled = false;
+      byId('queens').setAttribute('aria-busy', 'false');
+    }
+  }
+});
+resetQueens();
 let bookingRun=0;
 function resetBooking(){bookingRun++;byId('booking-results').replaceChildren();byId('slot-state').textContent='Available';byId('race').disabled=false;}
 byId('reset-race').addEventListener('click',resetBooking);
 byId('booking-form').addEventListener('submit',async event=>{event.preventDefault();resetBooking();const run=bookingRun,claim=createSlot();byId('race').disabled=true;byId('slot-state').textContent='Waiting for requests…';await Promise.all(['a','b'].map(async key=>{await delay(byId(`delay-${key}`).valueAsNumber);if(run!==bookingRun)return;const customer=key.toUpperCase(),result=claim(customer),item=document.createElement('li');item.textContent=result.confirmed?`Customer ${customer}: confirmed for 10:00.`:`Customer ${customer}: conflict. Customer ${result.owner} already booked 10:00.`;byId('booking-results').append(item);byId('slot-state').textContent=`Booked by customer ${result.owner}`;}));if(run===bookingRun)byId('race').disabled=false;});
+
+// Match anchor offsets to the actual header, including the wrapped mobile nav.
+const demoHeader = document.querySelector('header');
+const demoLinks = [...demoHeader.querySelectorAll('nav a')];
+const demoSections = [...document.querySelectorAll('main > section')];
+function updateDemoNavigation() {
+  const line = demoHeader.getBoundingClientRect().bottom + 24;
+  let active = demoSections.filter(section => section.getBoundingClientRect().top <= line).at(-1);
+  if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2) active = demoSections.at(-1);
+  for (const link of demoLinks) {
+    if (link.hash === '#' + active?.id) link.setAttribute('aria-current', 'location');
+    else link.removeAttribute('aria-current');
+  }
+}
+new ResizeObserver(() => {
+  document.documentElement.style.setProperty('--header-height', demoHeader.offsetHeight + 'px');
+  updateDemoNavigation();
+}).observe(demoHeader);
+window.addEventListener('scroll', updateDemoNavigation, {passive: true});
+window.addEventListener('resize', updateDemoNavigation);
+window.addEventListener('hashchange', updateDemoNavigation);
+updateDemoNavigation();
+
+mountSudoku(byId('sudoku-app'));
+mountCats(byId('cats-app'));
+mountChat(byId('chat-app'));
