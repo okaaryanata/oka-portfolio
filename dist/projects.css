@@ -73,3 +73,7 @@ button:disabled{cursor:default}
 .sudoku-editor input{appearance:none;line-height:1;color:var(--ink);caret-color:var(--accent);box-shadow:none}
 .sudoku-editor input:focus{outline:0;outline-offset:0;box-shadow:inset 0 0 0 2px var(--accent);background:var(--wash)}
 @media(max-width:380px){.chat-pane-header{flex-wrap:wrap}.chat-message-menu .chat-menu-items{grid-template-columns:1fr}.chat-send{flex-wrap:wrap}.controls{gap:8px}}
+
+/* Allow long saved-demo labels to shrink inside the mobile controls. */
+.controls>*{max-width:100%;min-width:0}.controls label select{width:100%;min-width:0}.demo-heading>*{min-width:0}
+@media(max-width:760px){.header nav{flex-wrap:nowrap;gap:18px}}
