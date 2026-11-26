@@ -32,7 +32,7 @@ The frontend has no runtime npm dependencies and no build step. Test dependencie
 - **Booking:** a clearly labeled browser simulation, not a real reservation service.
 - **Sudoku:** editable clues, sample/clear/reset, local validation, Go API solving, keyboard navigation, and visible errors.
 - **Cat GIFs:** load/another/stop controls using CATAAS through Go. No autoplay; animation and requests stop when leaving the viewer or hiding the page.
-- **IM Chat:** send, replies, copy, private stars, shared pins, delete-for-me, sender-only edit/revoke, delivery/read receipts, typing, and reconnect with duplicate prevention.
+- **IM Chat:** conversation lists with unread red dots, accurate message previews, peer presence, per-client offline controls, send/replies/copy, private stars, shared pins, delete-for-me, sender-only edit/revoke, receipts, typing, and reconnect with duplicate prevention.
 
 The homepage still has two cards per desktop carousel view and one on mobile. All six full demos are linked from the project-page sticky header. The homepage Sudoku sample shares the full solver's API module.
 
@@ -42,7 +42,13 @@ Demo A and Demo B are pre-registered demo identities, not real user accounts. Th
 
 History survives refreshes and backend restarts and expires after 24 hours without authenticated activity. Typing and heartbeats do not extend it. New demo switches both panes to a fresh room. Storage-disabled browsers can use the demo but cannot recover it after a refresh.
 
-Both panes use real WebSockets. The backend commits mutations before publishing viewer-specific snapshots. Reconnection restores state and retries pending sends with the original idempotency key. Received messages are marked delivered; read receipts require the receiving pane to be visible with its all-messages view at the bottom. On mobile, panes stack and the offscreen pane does not automatically mark messages read.
+Each pane starts on its conversation list and stays connected there. The row shows the other account’s name, latest visible message, timestamp, and a red unread dot with an accessible unread count. Opening the row enters conversation detail; Conversations returns to the list without going offline. Detail shows the other account’s online/offline presence. If this client is disconnected, peer presence is Unknown rather than stale Online/Offline.
+
+The preview updates when the latest message is edited or revoked. Revocation shows Message revoked; delete-for-me falls back to that account’s previous visible message, or No messages yet. Edits do not create new unread activity or reorder history. Revoked/hidden messages do not contribute to unread counts; pins and stars do not replace the preview.
+
+Go offline intentionally disconnects one account and pauses automatic reconnect. Go online restores it and synchronizes current history. A sender can successfully send while its peer is offline: Sent means saved by the server, Delivered follows receiver acknowledgment, and Read follows eligible viewing. While on the list, receiving and acknowledging delivery never clears the unread dot. Manual offline keeps the current view, draft, and pending sends in memory; the offline switch itself is not persisted across page refreshes.
+
+Both panes use real WebSockets. The backend commits mutations before publishing viewer-specific snapshots. Reconnection restores state and retries pending sends with the original idempotency key. Received messages are marked delivered; read receipts require conversation detail to be open, the latest messages visible in the all-messages view at the bottom, and the document active. On mobile, panes stack and the offscreen pane does not automatically mark messages read.
 
 Stars and delete-for-me are account-specific. Pins are shared. Revoking clears the text for both and removes it from pins/stars/reply previews. Editing and revoking are sender-only. Chats are text-only; uploads, groups, and calls are outside this portfolio demo.
 
