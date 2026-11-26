@@ -18,7 +18,7 @@ async function execute(method,args){
  if(!repository)throw new Error('Local SQLite has not opened.');
  return navigator.locks.request(lockName,()=>{
   if(method==='close'){db.close();return null;}
-  if(!['read','enqueue','snapshot','acknowledge','reject','prepare','update','discard','retry'].includes(method))throw new Error('Invalid database method.');
+  if(!['read','enqueue','snapshot','acknowledge','reject','prepare','update','discard','retry','clear'].includes(method))throw new Error('Invalid database method.');
   return repository[method](...args);
  });
 }

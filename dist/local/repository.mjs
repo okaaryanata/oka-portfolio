@@ -14,7 +14,7 @@ export class Repository {
   ops(){return this.db.query('SELECT data FROM outbox ORDER BY seq').map(row=>JSON.parse(row.data));}
   canonical(){return this.db.query('SELECT data FROM confirmed_messages ORDER BY position').map(row=>JSON.parse(row.data));}
   saveOp(op){this.db.exec('INSERT INTO outbox(id,data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',[op.id,JSON.stringify(op)]);}
-  view(){return {...project(this.canonical(),this.ops(),this.actor,this.get('aliases',{})),revision:this.get('revision',-1),draft:this.get('draft',''),online:this.get('online',true),expired:this.get('expired',false),operations:this.ops(),storage:'SQLite'};}
+  view(){const projected=project(this.canonical(),this.ops(),this.actor,this.get('aliases',{}));if(!this.get('online',true))for(const message of projected.messages)if(message.status==='Sending')message.status='Queued';return {...projected,revision:this.get('revision',-1),draft:this.get('draft',''),online:this.get('online',true),expired:this.get('expired',false),operations:this.ops(),storage:'SQLite'};}
   read(){return this.transaction(()=>this.view());}
   enqueue(action,fields={},id=crypto.randomUUID(),now=Date.now()) {
     return this.transaction(()=>{
