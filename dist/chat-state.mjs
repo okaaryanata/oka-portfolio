@@ -6,5 +6,5 @@ export function applySnapshot(state, snapshot) {
 export function visibleMessages(messages, filter) {
   return messages.filter(message=>filter==='starred'?message.starred:filter==='pinned'?message.pinned:true);
 }
-export function receipt(message) { return message.read?'Read':message.delivered?'Delivered':'Sent'; }
+export function receipt(message) { if(message.status==='Queued')return 'Queued';if(message.status==='Sending')return 'Sending…';return message.read?'Read':message.delivered?'Delivered':'Sent'; }
 export function retryCommands(pending) { return [...pending.values()]; }
