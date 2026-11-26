@@ -14,7 +14,7 @@ export class Repository {
   ops(){return this.db.query('SELECT data FROM outbox ORDER BY seq').map(row=>JSON.parse(row.data));}
   canonical(){return this.db.query('SELECT data FROM confirmed_messages ORDER BY position').map(row=>JSON.parse(row.data));}
   saveOp(op){this.db.exec('INSERT INTO outbox(id,data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',[op.id,JSON.stringify(op)]);}
-  view(){const projected=project(this.canonical(),this.ops(),this.actor,this.get('aliases',{}));if(!this.get('online',true))for(const message of projected.messages)if(message.status==='Sending')message.status='Queued';return {...projected,revision:this.get('revision',-1),draft:this.get('draft',''),online:this.get('online',true),expired:this.get('expired',false),operations:this.ops(),storage:'SQLite'};}
+  view(){const projected=project(this.canonical(),this.ops(),this.actor,this.get('aliases',{}));if(!this.get('online',true))for(const message of projected.messages)if(message.status==='Sending')message.status='Queued';return {...projected,revision:this.get('revision',-1),draft:this.get('draft',''),compose:this.get('compose',{}),online:this.get('online',true),expired:this.get('expired',false),operations:this.ops(),storage:'SQLite'};}
   read(){return this.transaction(()=>this.view());}
   enqueue(action,fields={},id=crypto.randomUUID(),now=Date.now()) {
     return this.transaction(()=>{
@@ -73,7 +73,7 @@ export class Repository {
     }
     return null;
   });}
-  update(values){return this.transaction(()=>{for(const[key,value]of Object.entries(values)){if(!['draft','online','expired'].includes(key))throw new Error('Invalid local setting.');this.set(key,value);}return this.view();});}
+  update(values){return this.transaction(()=>{for(const[key,value]of Object.entries(values)){if(!['draft','compose','online','expired'].includes(key))throw new Error('Invalid local setting.');this.set(key,value);}return this.view();});}
   clear(){return this.transaction(()=>{this.db.exec('DELETE FROM confirmed_messages');this.db.exec('DELETE FROM outbox');this.db.exec("DELETE FROM metadata WHERE key!='identity'");this.set('online',false);this.set('expired',true);return this.view();});}
   discard(id){return this.transaction(()=>{const op=this.ops().find(op=>op.id===id);if(op?.status!=='failed')throw new Error('Only failed operations can be discarded.');this.db.exec('DELETE FROM outbox WHERE id=?',[id]);return this.view();});}
   retry(id,newID=crypto.randomUUID()){return this.transaction(()=>{
