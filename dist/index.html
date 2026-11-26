@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Oka Aryanata, software engineer in Jakarta. Go, distributed systems, and production reliability.">
+<meta name="color-scheme" content="light dark">
+<title>Oka Aryanata · Software Engineer</title>
+<script>
+try { const theme = localStorage.getItem('oka-theme'); if (theme) document.documentElement.dataset.theme = theme; } catch {}
+</script>
+<link rel="stylesheet" href="style.css">
+<script defer src="theme.js"></script>
+<script defer src="app.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header><div class="wrap header">
+<a class="brand" href="#main"><span>OA</span> Oka Aryanata</a>
+<nav aria-label="Main navigation"><a href="#summary">About</a><a href="#experience">Experience</a><a href="#skills">Tech Stack</a><a href="#certifications">Training</a><a href="#projects">Projects</a><a href="#contact">Contact</a></nav>
+<button type="button" id="theme" aria-label="Switch color theme" title="Switch color theme"><span aria-hidden="true">◐</span><span id="theme-text"></span></button>
+</div></header>
+<main id="main" class="wrap">
+<section class="hero" aria-labelledby="intro">
+<p class="location">Software engineer · Jakarta, Indonesia</p>
+<h1 id="intro">Oka Aryanata</h1>
+<p class="intro">I build Go services and help keep them running in production. Most recently, I worked on real-time messaging, Kubernetes deployments, and release automation.</p>
+<div class="actions"><a class="button primary" href="Oka_Aryanata_CV.pdf" download>Download CV (PDF)</a><a class="button" href="mailto:okaaryanata@gmail.com">Email me</a></div>
+</section>
+<section id="summary" class="section split">
+<div><h2>About</h2></div>
+<div class="summary">
+<p>I’ve spent <strong>6+ years</strong> building backend services, primarily in Go. I’ve worked on REST and gRPC APIs, WebSocket messaging, and background jobs. On a real-time messaging product, I investigated delivery issues and how read status gets out of sync across devices.</p>
+<p>I’ve managed Kubernetes workloads on AWS and Alibaba Cloud and helped move manual Docker releases to CI/CD. I use metrics and distributed traces to investigate production issues, and I work with teammates on code reviews, mentoring, and breaking down tasks.</p>
+</div>
+</section>
+<section id="experience" class="section split">
+<div><h2>Experience</h2></div>
+<div class="timeline">
+<article>
+<p class="dates">Mar 2025 – Nov 2026</p>
+<h3>Backend Engineer</h3>
+<p class="company">PT. Citra International Digital</p>
+<ul>
+<li>Developed and maintained Go services, including REST APIs, gRPC services, WebSocket interfaces, and scheduled jobs.</li>
+<li>Collaborated on microservice components for asynchronous and event-driven workflows. Investigated message delivery, read status, and state synchronization across devices.</li>
+<li>Helped move releases from manual <code>docker run</code> commands to automated CI/CD. Managed Kubernetes manifests and troubleshot workloads on AWS and Alibaba Cloud. <a href="#deployment-case-study">Read the deployment case study</a>.</li>
+<li>Implemented monitoring and tracing with Prometheus, Grafana, Jaeger, and OpenTelemetry. Supported engineering quality through linting, code reviews, mentoring, and task breakdown.</li>
+</ul>
+</article>
+<article>
+<p class="dates">Jan 2021 – Jan 2025</p>
+<h3>Backend Engineer</h3>
+<p class="company">PT. Lunaria Annua Teknologi</p>
+<ul>
+<li>Designed and maintained Go services and REST APIs. Built gRPC services for integrations and scheduled background jobs for application workflows.</li>
+<li>Refactored legacy code and database queries to improve service performance and maintainability.</li>
+<li>Implemented CI/CD pipelines, monitored service performance, and diagnosed production issues. Reviewed code and helped teammates break down engineering tasks.</li>
+</ul>
+</article>
+<article>
+<p class="dates">Jan 2020 – Dec 2020</p>
+<h3>Backend Engineer</h3>
+<p class="company">PT. Forstok Teknologi Indonesia</p>
+<ul>
+<li>Developed REST APIs in Ruby and Go for multi-channel selling features and third-party integrations.</li>
+<li>Built background workers and schedulers to automate application tasks. Supported CI/CD, monitoring, and backend troubleshooting.</li>
+</ul>
+</article>
+<article>
+<p class="dates">Mar 2019 – Sep 2019</p>
+<h3>Full Stack Engineer</h3>
+<p class="company">PT. Harmonix Teknologi Peentar</p>
+<ul>
+<li>Contributed to backend and frontend development for web applications.</li>
+<li>Collaborated on Java-based projects for Kimia Farma Indonesia.</li>
+</ul>
+</article>
+</div>
+</section>
+<section class="section split" id="skills">
+<div><h2>Tech Stack</h2></div>
+<dl class="skills">
+<div><dt>Languages</dt><dd>Go · Python · Ruby · Java</dd></div>
+<div><dt>Backend</dt><dd>REST · gRPC · WebSocket · Microservices · Event-driven systems</dd></div>
+<div><dt>Data &amp; messaging</dt><dd>MySQL · PostgreSQL · MongoDB · Firebase · Redis · Kafka</dd></div>
+<div><dt>Infrastructure</dt><dd>AWS · Alibaba Cloud · Google Cloud Platform (GCP, bootcamp) · Docker · Kubernetes · Argo CD</dd></div>
+<div><dt>Observability</dt><dd>Prometheus · Grafana · Jaeger · OpenTelemetry</dd></div>
+</dl>
+</section>
+<section class="section split" id="certifications">
+<div><h2>Certifications and training</h2></div>
+<dl class="credentials">
+<div><dt>Certified Practical DevOps Engineer</dt><dd>Studi DevSecOps · 4-month intensive bootcamp</dd></div>
+<div><dt>Certificate of Achievement: Final Project of Bootcamp and DevOps Engineer Certification</dt><dd>Studi DevSecOps · 4-month online program</dd></div>
+<div><dt>Indonesian Scrum Master</dt><dd>Scrum Institute · 2018</dd></div>
+<div><dt>Full Stack Developer Bootcamp</dt><dd>Makers Institute · 2018</dd></div>
+<div><dt>Certified Secure Computer User</dt><dd>EC-Council · 2017</dd></div>
+</dl>
+</section>
+<section class="section split" id="deployment-case-study" aria-labelledby="case-studies-heading">
+<div><h2 id="case-studies-heading">Engineering Case Study</h2></div>
+<article class="summary">
+<h3>Automating deployments for a real-time chat app</h3>
+<p><strong>Problem.</strong> Releases depended on developers logging into servers and starting application containers with <code>docker run</code>.</p>
+<p><strong>My contribution.</strong> I helped the team move deployments into CI/CD. On the Kubernetes side, I maintained deployment manifests and troubleshot application workloads.</p>
+<p><strong>Outcome.</strong> Once the automated workflow was in place, developers could release the app without starting containers manually on servers.</p>
+</article>
+</section>
+<section class="section" id="projects">
+<h2>Personal Projects</h2>
+<div class="projects">
+<article class="project"><div class="project-copy"><p class="location">Graph search</p><h3>Maze &amp; Pathfinding</h3><p>Draw walls, move the endpoints, and compare BFS and A* by route length and cells explored.</p><a class="button" href="projects.html#maze-section">Explore pathfinding</a></div></article>
+<article class="project"><div class="project-copy"><p class="location">Backtracking</p><h3>N-Queens Visualizer</h3><p>Watch queens find their place on a 4–8 square board, including every step back from a dead end.</p><a class="button" href="projects.html#queens-section">Try N-Queens</a></div></article>
+<article class="project"><div class="project-copy"><p class="location">Concurrency concept</p><h3>Booking Conflict Simulator</h3><p>Race two requests for a single slot. A browser simulation of a first-claim booking rule.</p><a class="button" href="projects.html#booking-section">Run the booking demo</a></div></article>
+<article class="project" id="sudoku"><div class="project-visual puzzle-visual">
+<div id="board" aria-hidden="true"></div>
+</div><div class="project-copy"><h3>Sudoku Solver</h3><p>Try the sample puzzle here, or open my original solver.</p><div class="actions"><button type="button" id="solve" class="button">Solve sample</button><a href="https://kumiskucing.cloud/sudoku-solver">Original solver</a></div><p id="puzzle-status" role="status" class="status"></p></div></article>
+<article class="project" id="cat-gifs"><div class="project-visual cat-visual"><img id="cat-image" src="cat-still.png" width="256" height="144" alt="Pixel-art orange cat lounging with its tail curled upward" loading="lazy"></div><div class="project-copy"><h3>Cat GIFs</h3><p>Play a pixel-art cat GIF here, or browse my original collection.</p><div class="actions"><button type="button" id="cat-play" class="button" aria-pressed="false">Play cat GIF</button><a href="https://kumiskucing.cloud">Original collection</a></div></div></article>
+</div>
+</section>
+<section class="section split" id="contact">
+<div><h2>Contact</h2></div>
+<div><p class="contact-copy">I’m open to software engineering roles and freelance projects.</p><p><a href="mailto:okaaryanata@gmail.com">okaaryanata@gmail.com</a> <button type="button" class="button" id="copy-email">Copy email</button></p><p id="copy-status" role="status"></p><div class="actions"><a class="button primary" href="mailto:okaaryanata@gmail.com">Email me</a><a class="button" href="https://github.com/okaaryanata">GitHub</a><a class="button" href="https://www.linkedin.com/in/oka-aryanata-64b6279a/">LinkedIn</a></div></div>
+</section>
+</main>
+<footer><div class="wrap"><span>Anak Agung Gede Oka Aryanata</span><a href="#main">Back to top</a></div></footer>
+</body>
+</html>
