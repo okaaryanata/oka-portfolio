@@ -50,3 +50,15 @@ test('navigation warns while a send is waiting for its local commit',async t=>{
  const {a,stores,win}=await chat(t),store=stores.opened.find(s=>s.actor==='a');a.querySelector('.chat-open-conversation').click();const original=store.call.bind(store);let finish;store.call=(method,...args)=>method==='enqueue'?new Promise(resolve=>finish=async()=>resolve(await original(method,...args))):original(method,...args);
  a.querySelector('textarea').value='do not lose this';a.querySelector('form').dispatchEvent(new win.Event('submit',{cancelable:true}));const unloading=new win.Event('beforeunload',{cancelable:true});win.dispatchEvent(unloading);assert.equal(unloading.defaultPrevented,true);await finish();await settle();const safe=new win.Event('beforeunload',{cancelable:true});win.dispatchEvent(safe);assert.equal(safe.defaultPrevented,false);assert.equal((await original('read')).messages[0].text,'do not lose this');
 });
+
+test('conversation menus open pinned and starred views with back navigation to all messages',async t=>{
+ const {a,stores,win}=await chat(t),store=stores.opened.find(s=>s.actor==='a');
+ await store.call('snapshot',{revision:1,messages:[message({pinned:true}),message({id:'server-2',client_message_id:'client-2',text:'favorite',starred:true}),message({id:'server-3',client_message_id:'client-3',text:'ordinary'})]});await settle();
+ a.querySelector('.chat-open-conversation').click();assert.equal(a.querySelectorAll('.chat-message').length,3);assert.equal(a.querySelector('.chat-back').getAttribute('aria-label'),'Back to conversations');
+ const menu=a.querySelector('.chat-view-menu');menu.open=true;a.querySelector('[data-chat-view="pinned"]').click();
+ assert.equal(menu.open,false);assert.equal(a.querySelector('.chat-detail-title h4').textContent,'Pinned messages');assert.equal(a.querySelector('form').hidden,true);assert.equal(a.querySelectorAll('.chat-message').length,1);assert.equal(a.querySelector('.chat-text').textContent,'hello');
+ a.querySelector('.chat-back').click();assert.equal(a.querySelector('.chat-detail').hidden,false);assert.equal(a.querySelector('form').hidden,false);assert.equal(a.querySelectorAll('.chat-message').length,3);
+ a.querySelector('[data-chat-view="starred"]').click();assert.equal(a.querySelector('.chat-text').textContent,'favorite');a.querySelector('.chat-back').click();a.querySelector('.chat-back').click();assert.equal(a.querySelector('.chat-detail').hidden,true);
+ a.querySelector('.chat-open-conversation').click();assert.equal(a.querySelectorAll('.chat-message').length,3);assert.equal(a.querySelector('form label').className,'sr-only');assert.ok(!a.querySelector('form').textContent.includes('Message as'));
+ const actions=a.querySelector('.chat-message-menu');assert.equal(actions.querySelector('summary').getAttribute('aria-label'),'Message actions');actions.open=true;actions.dispatchEvent(new win.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(actions.open,false);
+});
