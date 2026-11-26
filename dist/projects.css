@@ -68,3 +68,8 @@ button:disabled{cursor:default}
 .chat-context:empty{display:none}.chat-pane form{margin-top:12px}.chat-pane form[hidden]{display:none}
 
 .chat-connection-help{font-size:.875rem;color:var(--muted);margin:0 0 12px;overflow-wrap:anywhere}.chat-connection-help:empty{display:none}
+
+/* A cell's focus indicator stays inside its track and never covers neighbours. */
+.sudoku-editor input{appearance:none;line-height:1;color:var(--ink);caret-color:var(--accent);box-shadow:none}
+.sudoku-editor input:focus{outline:0;outline-offset:0;box-shadow:inset 0 0 0 2px var(--accent);background:var(--wash)}
+@media(max-width:380px){.chat-pane-header{flex-wrap:wrap}.chat-message-menu .chat-menu-items{grid-template-columns:1fr}.chat-send{flex-wrap:wrap}.controls{gap:8px}}

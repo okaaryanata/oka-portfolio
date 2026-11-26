@@ -1,7 +1,7 @@
 import {api} from './api.mjs';
 export const sample = '530070000600195000098000060800060003400803001700020006060000280000419005000080079';
 export function validateBoard(board) {
-  if (board.length !== 9 || board.some(row => row.length !== 9 || row.some(value => !Number.isInteger(value) || value < 0 || value > 9))) return 'Use digits 1–9, or leave cells empty.';
+  if (!Array.isArray(board) || board.length !== 9 || board.some(row => !Array.isArray(row) || row.length !== 9 || row.some(value => !Number.isInteger(value) || value < 0 || value > 9))) return 'Use digits 1–9, or leave cells empty.';
   for (let row=0;row<9;row++) for(let col=0;col<9;col++) {
     const value=board[row][col]; if(!value) continue;
     for(let i=0;i<9;i++) if((i!==col && board[row][i]===value)||(i!==row && board[i][col]===value)) return 'The clues contain duplicate digits in a row or column.';
@@ -17,8 +17,13 @@ export function mountSudoku(root) {
   const cells=Array.from({length:81},(_,index)=>{
     const input=document.createElement('input');input.type='text';input.inputMode='numeric';input.maxLength=1;input.autocomplete='off';
     input.setAttribute('aria-label',`Row ${Math.floor(index/9)+1}, column ${index%9+1}`);
-    input.addEventListener('input',()=>{input.value=input.value.replace(/[^1-9]/g,'');input.classList.remove('solved-cell');});
-    input.addEventListener('keydown',event=>{const offsets={ArrowLeft:-1,ArrowRight:1,ArrowUp:-9,ArrowDown:9};if(event.key in offsets){const next=index+offsets[event.key];if(next>=0&&next<81){event.preventDefault();cells[next].focus();}}});
+    input.addEventListener('input',()=>{input.value=input.value.replace(/[^1-9]/g,'').slice(0,1);input.classList.remove('solved-cell');});
+    input.addEventListener('focus',()=>input.select());
+    input.addEventListener('keydown',event=>{
+      const row=Math.floor(index/9),col=index%9;
+      const targets={ArrowLeft:col>0?index-1:index,ArrowRight:col<8?index+1:index,ArrowUp:row>0?index-9:index,ArrowDown:row<8?index+9:index};
+      if(event.key in targets){event.preventDefault();cells[targets[event.key]].focus();}
+    });
     board.append(input);return input;
   });
   const read=()=>Array.from({length:9},(_,row)=>cells.slice(row*9,row*9+9).map(cell=>Number(cell.value)||0));

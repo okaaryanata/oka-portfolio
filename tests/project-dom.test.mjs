@@ -62,3 +62,28 @@ test('conversation menus open pinned and starred views with back navigation to a
  a.querySelector('.chat-open-conversation').click();assert.equal(a.querySelectorAll('.chat-message').length,3);assert.equal(a.querySelector('form label').className,'sr-only');assert.ok(!a.querySelector('form').textContent.includes('Message as'));
  const actions=a.querySelector('.chat-message-menu');assert.equal(actions.querySelector('summary').getAttribute('aria-label'),'Message actions');actions.open=true;actions.dispatchEvent(new win.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(actions.open,false);
 });
+
+test('all 81 Sudoku cells accept one digit, select existing clues and navigate without wrapping rows',t=>{
+ const win=environment(t),root=document.querySelector('#sudoku-app');mountSudoku(root);root.querySelector('[data-action="clear"]').click();const cells=[...root.querySelectorAll('input')];
+ for(let index=0;index<81;index++){
+  const cell=cells[index],row=Math.floor(index/9),col=index%9;
+  cell.value='x7!2';cell.dispatchEvent(new win.Event('input'));assert.equal(cell.value,'7',`cell ${index+1} sanitizes pasted input`);
+  cell.blur();cell.focus();assert.equal(cell.selectionStart,0);assert.equal(cell.selectionEnd,1);
+  for(const [key,target]of [['ArrowLeft',col?index-1:index],['ArrowRight',col<8?index+1:index],['ArrowUp',row?index-9:index],['ArrowDown',row<8?index+9:index]]){
+   cell.focus();const event=new win.KeyboardEvent('keydown',{key,cancelable:true});cell.dispatchEvent(event);assert.equal(document.activeElement,cells[target],`${key} from cell ${index+1}`);assert.equal(event.defaultPrevented,true);
+  }
+  cell.value='0';cell.dispatchEvent(new win.Event('input'));assert.equal(cell.value,'');
+ }
+});
+test('each of the nine Sudoku boxes rejects a diagonal duplicate before calling the backend',t=>{
+ const win=environment(t),root=document.querySelector('#sudoku-app');let requests=0;globalThis.fetch=async()=>{requests++;throw new Error('must not call');};mountSudoku(root);const cells=[...root.querySelectorAll('input')];
+ for(let box=0;box<9;box++){
+  root.querySelector('[data-action="clear"]').click();const top=Math.floor(box/3)*27+(box%3)*3;
+  for(const index of [top,top+10]){cells[index].value='7';cells[index].dispatchEvent(new win.Event('input'));}
+  root.querySelector('[data-action="solve"]').click();assert.match(root.querySelector('[role="status"]').textContent,/3×3 box/,`box ${box+1}`);
+ }
+ assert.equal(requests,0);
+});
+test('Sudoku fills every box and reset restores exactly the original clues',async t=>{
+ environment(t);const solution='534678912672195348198342567859761423426853791713924856961537284287419635345286179',root=document.querySelector('#sudoku-app');globalThis.fetch=async()=>({ok:true,json:async()=>({board:Array.from({length:9},(_,r)=>[...solution.slice(r*9,r*9+9)].map(Number))})});mountSudoku(root);const cells=[...root.querySelectorAll('input')],clues=cells.map(c=>c.value);root.querySelector('[data-action="solve"]').click();await settle();assert.equal(cells.map(c=>c.value).join(''),solution);assert.ok(cells.every(c=>!c.disabled));root.querySelector('[data-action="reset"]').click();assert.deepEqual(cells.map(c=>c.value),clues);
+});
