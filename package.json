@@ -5,12 +5,16 @@
   "description": "Oka Aryanata's portfolio frontend and interactive demos",
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "vendor:sqlite": "node scripts/vendor-sqlite.mjs"
   },
   "engines": {
     "node": ">=22"
   },
   "devDependencies": {
     "jsdom": "^26.1.0"
+  },
+  "dependencies": {
+    "@sqlite.org/sqlite-wasm": "3.54.1-build1"
   }
 }
