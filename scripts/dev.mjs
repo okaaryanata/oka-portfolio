@@ -5,8 +5,11 @@ import {readFile} from 'node:fs/promises';
 import {resolve, extname, sep} from 'node:path';
 const root=resolve(new URL('../dist/',import.meta.url).pathname);
 const backend=new URL(process.env.API_PROXY_TARGET || 'http://127.0.0.1:8081');
-const types={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.mjs':'text/javascript','.png':'image/png','.gif':'image/gif','.pdf':'application/pdf'};
+const types={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.mjs':'text/javascript','.png':'image/png','.gif':'image/gif','.pdf':'application/pdf','.wasm':'application/wasm'};
 const server=http.createServer(async(req,res)=>{
+  res.setHeader('Cross-Origin-Opener-Policy','same-origin');
+  res.setHeader('Cross-Origin-Embedder-Policy','require-corp');
+  res.setHeader('Cross-Origin-Resource-Policy','same-origin');
   const url=new URL(req.url,'http://localhost');
   if(url.pathname.startsWith('/api/')) {
     const proxy=http.request({hostname:backend.hostname,port:backend.port||80,path:req.url,method:req.method,headers:{...req.headers,host:backend.host}}, upstream=>{

@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "test": "node --test tests/*.test.mjs",
-    "vendor:sqlite": "node scripts/vendor-sqlite.mjs"
+    "vendor:sqlite": "node scripts/vendor-sqlite.mjs",
+    "build:shell": "node scripts/build-shell.mjs",
+    "predev": "npm run build:shell"
   },
   "engines": {
     "node": ">=22"
