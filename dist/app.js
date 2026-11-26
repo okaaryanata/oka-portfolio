@@ -138,8 +138,12 @@ const copyEmail = document.querySelector('#copy-email');
 copyEmail.addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText('okaaryanata@gmail.com');
+    copyEmail.dataset.copied = 'true';
+    copyEmail.setAttribute('aria-label', 'Email copied. Copy again');
     document.querySelector('#copy-status').textContent = 'Email address copied.';
   } catch {
+    copyEmail.dataset.copied = 'false';
+    copyEmail.setAttribute('aria-label', 'Copy email address');
     document.querySelector('#copy-status').textContent = 'Select and copy the email address above.';
   }
 });
@@ -148,7 +152,7 @@ copyEmail.addEventListener('click', async () => {
 const projectCards = [...document.querySelectorAll('#project-cards > .project')];
 const previousProjects = document.querySelector('#projects-prev');
 const nextProjects = document.querySelector('#projects-next');
-const narrowProjects = matchMedia('(max-width: 600px)');
+const narrowProjects = matchMedia('(max-width: 900px)');
 let projectPage = 0;
 function projectPages() {
   if (narrowProjects.matches) return projectCards.map((_, index) => index);

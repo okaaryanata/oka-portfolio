@@ -114,3 +114,24 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;padding-block:2
 .cat-visual img{max-height:210px;object-fit:contain}
 
 .chat-preview-messages{display:grid;gap:12px;width:min(85%,320px)}.chat-preview-messages span{padding:12px 16px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-right:35px}.chat-preview-messages span+span{margin-left:35px;margin-right:0;background:var(--bg)}
+
+/* Shared card geometry, with room for controls and status feedback. */
+.project-carousel .project-copy{display:flex;flex-direction:column;min-height:280px}
+.project-copy>.actions,.project-copy>a.button{margin-top:auto;align-self:flex-start}
+.project-copy>.actions{padding-top:12px;gap:10px}
+.project-copy .status{display:block;min-height:1.65em;font-size:.875rem;margin:8px 0 0}
+.project-visual{height:210px;min-height:210px}
+.project{transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.project:focus-within{border-color:var(--accent);box-shadow:0 6px 20px light-dark(#17375c12,#0003)}
+@media(hover:hover) and (pointer:fine){.project:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 10px 26px light-dark(#17375c18,#0005)}}
+.contact-email{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}.contact-email>a{overflow-wrap:anywhere;min-width:0}
+.button.copy-email{width:44px;height:44px;padding:0;justify-content:center;flex-shrink:0;color:var(--ink);background:var(--paper)}
+.copy-email svg{display:block;flex-shrink:0}.copy-email .copied-symbol{display:none}.copy-email[data-copied="true"] .copy-symbol{display:none}.copy-email[data-copied="true"] .copied-symbol{display:block;color:var(--accent)}
+#copy-status{color:var(--muted);font-size:.875rem;margin:0 0 12px}#copy-status:empty{display:none}
+@media(max-width:1000px){.header{flex-wrap:wrap;gap:12px;padding-block:12px}.header nav{order:3;flex-basis:100%;justify-content:space-between}}
+@media(max-width:760px){.project-carousel{grid-template-columns:1fr 1fr;gap:12px}.project-carousel .projects{grid-template-columns:1fr;grid-column:1/-1;grid-row:1}.carousel-arrow{width:44px;height:44px}#projects-prev{justify-self:end}#projects-next{justify-self:start}.project-carousel .project-copy{padding:20px;min-height:280px}.header nav{display:flex;flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;max-width:100%;gap:18px;padding-bottom:4px}.header nav a{white-space:nowrap;flex-shrink:0}.brand{font-size:.9375rem}.project-visual{overflow:hidden}}
+@media(prefers-reduced-motion:reduce){.project{transition:none}.project:hover{transform:none}}
+
+.project-copy .actions .button{font-size:.875rem;padding-inline:12px}
+@media(min-width:761px) and (max-width:900px){.project-carousel{grid-template-columns:1fr 1fr;gap:12px}.project-carousel .projects{grid-template-columns:1fr;grid-column:1/-1;grid-row:1}#projects-prev{justify-self:end}#projects-next{justify-self:start}}
+@media(max-width:500px){.project-carousel .project-copy{min-height:340px}}
