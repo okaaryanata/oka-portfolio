@@ -1,34 +1,40 @@
 import {api,websocketURL} from '../api.mjs';
 export class SyncEngine {
- constructor(room,actor,store,{onState=()=>{},onError=()=>{},locks=navigator.locks,Socket=WebSocket,request=api,channelFactory=name=>new BroadcastChannel(name)}={}){
-  Object.assign(this,{room,actor,store,onState,onError,locks,Socket,request});
+ constructor(room,actor,store,{onState=()=>{},onError=()=>{},locks=navigator.locks,Socket=WebSocket,request=api,connectTimeout=10000,eventTarget=globalThis.window,channelFactory=name=>new BroadcastChannel(name)}={}){
+  Object.assign(this,{room,actor,store,onState,onError,locks,Socket,request,connectTimeout,eventTarget});
   this.channel=channelFactory('oka-sync:'+room.room_id+':'+actor);this.channel.onmessage=({data})=>{if(data.type==='typing'&&this.leader)this.sendTyping(data.enabled);else if(data.type==='hello'&&this.leader)this.announce();else if(data.type==='reconnect'&&this.leader)this.reconnect();else if(data.type==='state'&&!this.leader){this.state=data.state;onState(this.state);}};
-  this.state={status:'Connecting…',presence:null,typing:false};this.aborter=new AbortController();this.receiving=Promise.resolve();this.closed=false;this.busy=false;this.attempt=0;
+  this.state={reason:'',status:'Connecting…',presence:null,typing:false};this.aborter=new AbortController();this.receiving=Promise.resolve();this.closed=false;this.busy=false;this.attempt=0;
  }
- async start(){this.unsubscribe=this.store.subscribe(()=>this.settingsChanged().catch(error=>this.onError(error.message)));this.channel.postMessage({type:'hello'});
+ async start(){this.onlineListener=()=>this.settingsChanged().catch(error=>this.onError(error.message));this.eventTarget?.addEventListener('online',this.onlineListener);this.unsubscribe=this.store.subscribe(()=>this.settingsChanged().catch(error=>this.onError(error.message)));this.channel.postMessage({type:'hello'});
   this.election=this.locks.request('oka-sync-owner:'+this.room.room_id+':'+this.actor,{signal:this.aborter.signal},async()=>{if(this.closed)return;this.leader=true;await this.settingsChanged();if(this.closed)return;await new Promise(resolve=>this.release=resolve);this.leader=false;}).catch(error=>{if(error.name!=='AbortError')this.onError(error.message);});
   return this;
  }
  announce(){this.onState(this.state);if(this.leader)this.channel.postMessage({type:'state',state:this.state});}
- status(value){this.state={...this.state,status:value};this.announce();}
+ status(value,reason=''){this.state={...this.state,status:value,reason};this.announce();}
  async settingsChanged(){const local=await this.store.call('read');if(this.closed)return;
   if(local.expired){this.disconnect();this.status('Expired — local archive');return;}
   if(!local.online){this.disconnect();this.status('Offline');return;}
-  if(!this.leader)return;
+  if(!this.leader||this.storageBlocked)return;
   if(!this.socket&&!this.connecting&&!this.retryTimer)this.connect();else this.pump();
  }
- disconnect(){this.connectEpoch=(this.connectEpoch||0)+1;clearTimeout(this.retryTimer);this.retryTimer=null;clearTimeout(this.ackTimer);this.busy=false;this.inflight=null;const old=this.socket;this.socket=null;old?.close();this.state={...this.state,presence:null,typing:false};this.announce();}
+ disconnect(){this.connectEpoch=(this.connectEpoch||0)+1;clearTimeout(this.retryTimer);this.retryTimer=null;clearTimeout(this.ackTimer);clearTimeout(this.connectTimer);this.busy=false;this.inflight=null;const old=this.socket;this.socket=null;old?.close();this.state={...this.state,presence:null,typing:false};this.announce();}
  async connect(){if(this.closed||!this.leader)return;const epoch=this.connectEpoch=(this.connectEpoch||0)+1;this.connecting=true;this.status('Signing in…');
   try{
    const session=await this.request('/chat/sessions',{method:'POST',body:JSON.stringify({room_id:this.room.room_id,recovery_token:this.room.recovery_token,account_id:this.actor})});
    if(this.closed||epoch!==this.connectEpoch)return;
    const current=this.socket=new this.Socket(websocketURL());this.status('Connecting…');
+   this.connectTimer=setTimeout(()=>{if(current===this.socket&&this.state.status!=='Connected'){this.connectionFailed('The chat server did not finish connecting.');}},this.connectTimeout);
    current.addEventListener('open',()=>{if(current===this.socket)current.send(JSON.stringify({type:'auth',token:session.token}));});
-   current.addEventListener('message',event=>{if(current!==this.socket)return;this.receiving=this.receiving.then(async()=>{if(current!==this.socket)return;await this.receive(JSON.parse(event.data));}).catch(error=>{this.onError(error.message);this.reconnect();});});
-   current.addEventListener('close',()=>{if(current!==this.socket||this.closed)return;this.socket=null;this.busy=false;clearTimeout(this.ackTimer);this.state={...this.state,presence:null,typing:false};this.status('Reconnecting…');this.retryTimer=setTimeout(()=>{this.retryTimer=null;this.settingsChanged();},Math.min(1000*2**this.attempt++,30000));});
+   current.addEventListener('message',event=>{if(current!==this.socket)return;this.receiving=this.receiving.then(async()=>{if(current!==this.socket)return;await this.receive(JSON.parse(event.data));}).catch(error=>{this.storageBlocked=true;this.disconnect();this.status('Sync paused','Local synchronization needs attention. Your saved messages are retained. Try reconnecting.');this.onError(error.message);});});
+   current.addEventListener('close',event=>{if(current!==this.socket||this.closed)return;this.connectionFailed(event.code===1008?'The server refused this session. Retrying sign-in.':'The chat connection was interrupted.');});
    current.addEventListener('error',()=>{});
-  }catch(error){if(this.closed||epoch!==this.connectEpoch)return;if(error.status===401){await this.store.call('update',{expired:true,online:false});this.status('Expired — local archive');}else{this.status('Reconnecting…');this.retryTimer=setTimeout(()=>{this.retryTimer=null;this.settingsChanged();},Math.min(1000*2**this.attempt++,30000));}}
+  }catch(error){if(this.closed||epoch!==this.connectEpoch)return;if(error.status===401){await this.store.call('update',{expired:true,online:false});this.status('Expired — local archive');}else{this.connectionFailed(error.message||'Cannot reach the chat server.');}}
   finally{this.connecting=false;if(!this.closed&&epoch!==this.connectEpoch)this.settingsChanged().catch(error=>this.onError(error.message));}
+ }
+ connectionFailed(reason){
+  this.disconnect();const delay=Math.min(1000*2**this.attempt++,30000);
+  this.status('Waiting for connection',`${reason} Messages are saved on this device. Retrying automatically.`);
+  this.retryTimer=setTimeout(()=>{this.retryTimer=null;this.settingsChanged().catch(error=>this.onError(error.message));},delay);
  }
  async receive(event){
   if(event.type==='snapshot'){
@@ -36,7 +42,7 @@ export class SyncEngine {
    // Receipt creation follows the committed recipient SQLite transaction.
    const last=local.messages.filter(m=>m.sender_id!==this.actor&&!m.delivered).at(-1);
    if(last)await this.store.call('enqueue','delivered',{message_id:last.id});
-   this.attempt=0;this.status('Connected');this.pump();
+   clearTimeout(this.connectTimer);this.attempt=0;this.status('Connected');this.pump();
   }else if(event.type==='ack'){
    await this.store.call('acknowledge',event);if(event.id===this.inflight){this.busy=false;this.inflight=null;clearTimeout(this.ackTimer);}this.pump();
   }else if(event.type==='error'){
@@ -56,6 +62,6 @@ export class SyncEngine {
  }
  typing(enabled){this.channel.postMessage({type:'typing',enabled});if(this.leader)this.sendTyping(enabled);}
  sendTyping(enabled){if(this.socket?.readyState===1&&this.state.status==='Connected')this.socket.send(JSON.stringify({type:'command',id:crypto.randomUUID(),action:'typing',enabled}));}
- async reconnect(){if(this.closed)return;if(!this.leader){this.channel.postMessage({type:'reconnect'});return;}this.disconnect();await this.settingsChanged();}
- async close(){this.closed=true;this.unsubscribe?.();this.disconnect();clearTimeout(this.typingTimer);this.aborter.abort();this.release?.();await this.election;this.channel.close();}
+ async reconnect(){if(this.closed)return;this.storageBlocked=false;if(!this.leader){this.channel.postMessage({type:'reconnect'});return;}this.disconnect();await this.settingsChanged();}
+ async close(){this.closed=true;this.eventTarget?.removeEventListener('online',this.onlineListener);this.unsubscribe?.();this.disconnect();clearTimeout(this.typingTimer);this.aborter.abort();this.release?.();await this.election;this.channel.close();}
 }

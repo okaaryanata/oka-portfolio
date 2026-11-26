@@ -24,3 +24,15 @@ test('one sync owner per account hands over and resends the exact durable operat
 });
 test('recipient storage failure never emits a delivery command',async t=>{environment(t);let receipts=0;const store={async call(method){if(method==='snapshot')throw new Error('quota exceeded');if(method==='enqueue')receipts++;},subscribe(){return()=>{};}};const engine=new SyncEngine({room_id:'room'},'b',store,{locks:lockManager(),Socket});t.after(()=>engine.close());await assert.rejects(engine.receive({type:'snapshot',revision:1,messages:[message]}),/quota/);assert.equal(receipts,0);});
 test('expired server session preserves SQLite work as a local archive',async t=>{environment(t);const stores=localStores(),store=await stores.open('room','a');await store.call('enqueue','send',{text:'offline retained'},'one');const engine=new SyncEngine({room_id:'room'},'a',store,{locks:lockManager(),Socket,request:async()=>{const error=new Error('expired');error.status=401;throw error;}});t.after(async()=>{await engine.close();await store.close();});await engine.start();await until(()=>store.repository.read().expired);assert.equal(store.repository.read().messages[0].text,'offline retained');assert.equal(store.repository.read().operations.length,1);});
+
+test('stalled WebSocket handshake retries with an explanation and keeps the local outbox',async t=>{
+ environment(t);class SilentSocket extends Socket{send(json){this.sent.push(JSON.parse(json));}}
+ const stores=localStores(),store=await stores.open('room','a');await store.call('enqueue','send',{text:'saved offline'},'queued');
+ const engine=new SyncEngine({room_id:'room'},'a',store,{locks:lockManager(),Socket:SilentSocket,request:async()=>({token:'token'}),connectTimeout:20});
+ t.after(async()=>{await engine.close();await store.close();});await engine.start();await until(()=>engine.state.status==='Waiting for connection');assert.match(engine.state.reason,/did not finish connecting/);assert.match(engine.state.reason,/saved on this device/);assert.equal(store.repository.read().operations.length,1);assert.ok(engine.retryTimer);
+});
+test('local snapshot failure pauses sync instead of repeatedly reconnecting',async t=>{
+ environment(t);Socket.sockets=[];let signIns=0;const store={async call(method){if(method==='read')return {online:true};if(method==='snapshot')throw new Error('disk full');},subscribe(){return()=>{};}};
+ const errors=[];const engine=new SyncEngine({room_id:'room'},'a',store,{locks:lockManager(),Socket,request:async()=>{signIns++;return {token:'token'};},onError:error=>errors.push(error)});
+ t.after(()=>engine.close());await engine.start();await until(()=>engine.state.status==='Sync paused');assert.equal(engine.retryTimer,null);assert.equal(signIns,1);assert.deepEqual(errors,['disk full']);assert.match(engine.state.reason,/saved messages are retained/);
+});
