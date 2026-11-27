@@ -1,5 +1,0 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {JSDOM} from 'jsdom';import vm from 'node:vm';
-const html=readFileSync(new URL('../dist/index.html',import.meta.url),'utf8');
-const script=readFileSync(new URL('../dist/app.js',import.meta.url),'utf8');
-const source=script.slice(script.indexOf('const projectCards ='),script.indexOf('// Use the same pathfinding'));
-for(const mobile of [false,true])test(`all six carousel cards are reachable on ${mobile?'mobile':'desktop'}`,()=>{const dom=new JSDOM(html);const media={matches:mobile,addEventListener(){}};vm.runInNewContext(source,{document:dom.window.document,matchMedia:()=>media,updateActiveSection(){},catURL:null});const cards=[...dom.window.document.querySelectorAll('#project-cards>.project')],seen=new Set();const next=dom.window.document.querySelector('#projects-next');assert.equal(cards.filter(card=>!card.hidden).length,mobile?1:2);for(let page=0;page<10;page++){cards.filter(card=>!card.hidden).forEach(card=>seen.add(card));if(next.disabled)break;next.click();}assert.equal(seen.size,6);dom.window.close();});

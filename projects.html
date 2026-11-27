@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Oka Aryanata, software engineer. Go services, real-time messaging, and interactive demos."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <title>Interactive Projects · Oka Aryanata</title>
+    <script>
+      try {
+        const theme = localStorage.getItem('oka-theme');
+        if (theme) document.documentElement.dataset.theme = theme;
+      } catch {}
+    </script>
+    <script src="/config.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/app/projects.tsx"></script>
+  </body>
+</html>
