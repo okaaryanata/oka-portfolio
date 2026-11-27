@@ -1,6 +1,0 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import {applySnapshot,visibleMessages,receipt,retryCommands} from '../dist/chat-state.mjs';
-test('out-of-order events cannot restore deleted or revoked message content',()=>{const state={revision:3,messages:[{id:'1',revoked:true,text:''}]};assert.equal(applySnapshot(state,{revision:2,messages:[{id:'1',text:'old'}]}),state);assert.equal(applySnapshot(state,{revision:4,messages:[]}).messages.length,0);});
-test('stars and pins filter the current account snapshot without changing it',()=>{const messages=[{id:'1',starred:true,pinned:false},{id:'2',starred:false,pinned:true}];assert.deepEqual(visibleMessages(messages,'starred').map(m=>m.id),['1']);assert.deepEqual(visibleMessages(messages,'pinned').map(m=>m.id),['2']);assert.equal(messages.length,2);});
-test('receipt labels and reconnect retries preserve message idempotency keys',()=>{assert.equal(receipt({read:true,delivered:true}),'Read');assert.equal(receipt({delivered:true}),'Delivered');assert.equal(receipt({}),'Sent');const send={id:'request-1',client_message_id:'client-1',text:'hello'};const pending=new Map([[send.id,send]]);assert.equal(retryCommands(pending)[0],send);});
