@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:4173/ or http://127.0.0.1:4173/projects.html. API and WebSocket traffic proxies to port 8081. `PORT=4174 npm run dev` uses the alternate allowed origin; `API_PROXY_TARGET` changes the local backend target. Use a consistent origin: browser databases on different ports are independent.
+Open http://127.0.0.1:4173/ or http://127.0.0.1:4173/projects.html. API and WebSocket traffic proxies to port 8081. `PORT=4174 npm run dev -- --bypass-lock` starts a second instance on the alternate allowed origin; `API_PROXY_TARGET` changes the local backend target. Use a consistent origin: browser databases on different ports are independent.
 
 For production/offline testing, stop the dev server on that port and run:
 
