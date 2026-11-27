@@ -1,6 +1,6 @@
 # Oka Aryanata — Portfolio frontend
 
-React + TypeScript + Vite portfolio with six interactive demos. Backend: sibling `../svaha-uni-api`.
+React + TypeScript + Vite portfolio with seven personal projects. Backend: sibling `../svaha-uni-api`.
 
 ## Run
 
@@ -38,6 +38,24 @@ API_SMOKE_URL=http://127.0.0.1:4173 npx vitest run tests/live-chat.test.tsx
 
 The check command runs ESLint, Stylelint, formatting, strict type checking, tests, and a production build. `npm run format` formats owned source. `npm run vendor:sqlite` refreshes pinned vendor assets from the installed package. See [architecture](docs/architecture.md), [AI workflow and credit guidance](docs/ai-workflow.md), and [agent rules](AGENTS.md).
 
+## Svaha Marketplace preview
+
+The Personal Projects gallery links to a **Coming soon** Indonesian service marketplace.
+The preview works with fictional data and does not require the portfolio API. Use its
+role switcher to browse services, submit a provider listing, or review it.
+
+The canonical frontend source is `../svaha-service-ops/marketplace/web`. The
+static preview in `public/marketplace/` was built from commit `36907e9`. To
+refresh it independently, build from the portfolio root with both repositories
+checked out as siblings.
+
+```sh
+npm --prefix ../svaha-service-ops/marketplace/web ci
+npm --prefix ../svaha-service-ops/marketplace/web run check
+rsync -a --delete ../svaha-service-ops/marketplace/web/dist/ public/marketplace/
+npm run check
+```
+
 ## Chat demo behavior
 
 Demo A and Demo B are pre-registered demo identities, not real user accounts. The API creates a room unique to this browser and issues separate room/account sessions. Its recovery credential and saved-room index stay in browser local storage; account session tokens stay in memory. Messages, drafts, read state, and pending operations are stored in separate room/account SQLite databases in the browser’s OPFS, not in localStorage or the frontend repository. Another visitor cannot access the conversation without that room capability. Use only example messages.
@@ -62,6 +80,6 @@ Stars and delete-for-me are account-specific. Pins are shared. Revoking clears t
 
 The frontend image builds source with Node 24 before copying `dist` into Nginx. Set `public/config.js` before building (or replace `/config.js` in the deployed static directory) to use a different absolute API base ending in `/api/v1`. Add its exact frontend origin to backend CORS_ORIGINS. Never place secrets in frontend configuration.
 
-Serve over HTTPS or localhost with COOP same-origin, COEP require-corp, CORP same-origin, and application/wasm MIME. Supplied Vite/Nginx configurations provide these. New generated files must be included in the static-only service-worker manifest; API responses and credentials must never be cached.
+Serve over HTTPS or localhost with COOP same-origin, COEP require-corp, CORP same-origin, and application/wasm MIME. Supplied Vite/Nginx configurations provide these. The generated service-worker manifest caches the chat shell. The marketplace preview loads as an independent static bundle.
 
 The existing database schemas and network contracts are unchanged. The original `loan`, `user-svc`, and `sudoku-solver` repositories are references only. No Git remote or public deployment is configured by this change.
