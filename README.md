@@ -1,40 +1,42 @@
 # Oka Aryanata — Portfolio frontend
 
-Static portfolio and six interactive projects: maze pathfinding, N-Queens, booking conflicts, Sudoku, Cat GIFs, and a live two-client IM chat demo. The Go backend is a separate sibling repository, `../oka-portfolio-api`.
+React + TypeScript + Vite portfolio with six interactive demos. Backend: sibling `../svaha-uni-api`.
 
-## Run locally
+## Run
 
-Requires Node.js 22+ and Go 1.25+.
-
-Terminal 1:
+Requires Node 24. Start the backend with `go run ./cmd/api` from its repository, then:
 
 ```sh
-cd ../oka-portfolio-api
-go run ./cmd/api
-```
-
-Terminal 2, from this repository:
-
-```sh
+npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:4173/projects.html. Both demo accounts automatically sign in to the same isolated chat room using independent sessions. API calls and WebSocket upgrades pass through the Node development server to `http://127.0.0.1:8081`.
+Open http://127.0.0.1:4173/ or http://127.0.0.1:4173/projects.html. API and WebSocket traffic proxies to port 8081. `PORT=4174 npm run dev` uses the alternate allowed origin; `API_PROXY_TARGET` changes the local backend target. Use a consistent origin: browser databases on different ports are independent.
 
-If 4173 is occupied, stop the old preview or use `PORT=4174 npm run dev`. Both default origins are allowed by the backend. `API_PROXY_TARGET` changes the local API target. The dev proxy expects an HTTP backend; use the API-base setting below for HTTPS services.
+For production/offline testing, stop the dev server on that port and run:
 
-The frontend ships pinned SQLite WebAssembly assets under `dist/vendor/sqlite`, so runtime package installation is not needed. `npm ci` installs test and asset-refresh dependencies. `npm run vendor:sqlite` reproduces the vendor assets; `npm run build:shell` regenerates the offline cache manifest and runs automatically before the dev server starts.
+```sh
+npm run build
+npm run preview
+```
 
-## Projects
+Offline caching is production-only. A previously initialized demo can reopen with the services unavailable. Development disables this app’s shell cache so edits do not serve stale modules; chat SQLite data is preserved.
 
-- **Maze:** editable endpoints/walls, BFS/A* comparison, cancel/reset.
-- **N-Queens:** sizes 4–8 with a stable chessboard, animated backtracking, cancellation, and reduced-motion support.
-- **Booking:** a clearly labeled browser simulation, not a real reservation service.
-- **Sudoku:** editable clues, sample/clear/reset, local validation, Go API solving, keyboard navigation, and visible errors.
-- **Cat GIFs:** load/another/stop controls using CATAAS through Go. No autoplay; animation and requests stop when leaving the viewer or hiding the page.
-- **IM Chat:** conversation lists with unread red dots, accurate message previews, peer presence, per-client offline controls, send/replies/copy, private stars, shared pins, delete-for-me, sender-only edit/revoke, receipts, typing, and reconnect with duplicate prevention.
+## Source and checks
 
-The homepage still has two cards per desktop carousel view and one on mobile. All six full demos are linked from the project-page sticky header. The homepage Sudoku sample shares the full solver's API module.
+- `src/app`, `src/pages`: two page entrypoints and composition.
+- `src/features`: React UI, algorithms, typed SQLite persistence and synchronization.
+- `src/shared`: API, layout/theme/menu primitives and shared styles.
+- `public`: CV/images/runtime config and verbatim pinned SQLite assets.
+- `dist`: generated output; do not edit or commit it.
+- `tests`: Vitest/React Testing Library, real file SQLite, and opt-in live proxy checks.
+
+```sh
+npm run check
+API_SMOKE_URL=http://127.0.0.1:4173 npx vitest run tests/live-chat.test.tsx
+```
+
+The check command runs ESLint, Stylelint, formatting, strict type checking, tests, and a production build. `npm run format` formats owned source. `npm run vendor:sqlite` refreshes pinned vendor assets from the installed package. See [architecture](docs/architecture.md), [AI workflow and credit guidance](docs/ai-workflow.md), and [agent rules](AGENTS.md).
 
 ## Chat demo behavior
 
@@ -42,7 +44,7 @@ Demo A and Demo B are pre-registered demo identities, not real user accounts. Th
 
 Backend rooms expire after 24 hours without authenticated activity. Local history and queued work remain on this browser until explicitly cleared; browser storage clearing/eviction can also remove them. Typing and heartbeats do not extend it. New demo switches both panes to new account databases and keeps the old room in Saved demos. Expired server rooms become local archives; queued work is retained and never automatically submitted into a fresh room. Clear local data explicitly removes the selected local copy and queued work for both accounts. Browsers without persistent OPFS/worker support show an error; there is no memory-only fallback.
 
-Each pane starts on its conversation list and stays connected there. The row shows the other account’s name, latest visible message, timestamp, and a red unread dot with an accessible unread count. Opening the row enters conversation detail; Conversations returns to the list without going offline. Detail shows the other account’s online/offline presence. If this client is disconnected, peer presence is Unknown rather than stale Online/Offline.
+Each pane starts on its conversation list and stays connected there. The row shows the other account’s name, latest visible message, timestamp, and a red unread dot with an accessible unread count. Opening the row enters conversation detail; The back arrow returns to the list without going offline. Detail shows the other account’s online/offline presence. If this client is disconnected, peer presence is Unknown rather than stale Online/Offline.
 
 The preview updates when the latest message is edited or revoked. Revocation shows Message revoked; delete-for-me falls back to that account’s previous visible message, or No messages yet. Edits do not create new unread activity or reorder history. Revoked/hidden messages do not contribute to unread counts; pins and stars do not replace the preview.
 
@@ -54,68 +56,12 @@ Received messages are marked delivered; read receipts require conversation detai
 
 Stars and delete-for-me are account-specific. Pins are shared. Revoking clears the text for both and removes it from pins/stars/reply previews. Editing and revoking are sender-only. Chats are text-only; uploads, groups, and calls are outside this portfolio demo.
 
-## Separate hosting and containers
+## Containers and deployment
 
-Set `dist/config.js` to an absolute API base ending in `/api/v1` when hosting frontend and API on different origins. Add the exact frontend origin to backend `CORS_ORIGINS`, including its scheme and port. WebSockets automatically use `ws:` or `wss:` matching the configured API. Never put secrets in frontend configuration. Serve the app over HTTPS or localhost with `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`, and an `application/wasm` MIME type. The supplied dev server and Nginx configuration provide these. Local databases are origin-specific: ports 4173 and 4174 have separate browser storage. Use a consistent URL. A service worker caches only static app/SQLite assets; API responses and credentials are never cached there.
+`docker compose up --build` builds this frontend and `../svaha-uni-api`. Nginx exposes the frontend on port 4173 and proxies to the API on 8081. The existing `chat-data` named volume is retained; avoid removing volumes when preserving chat history.
 
-With both sibling repositories present:
+The frontend image builds source with Node 24 before copying `dist` into Nginx. Set `public/config.js` before building (or replace `/config.js` in the deployed static directory) to use a different absolute API base ending in `/api/v1`. Add its exact frontend origin to backend CORS_ORIGINS. Never place secrets in frontend configuration.
 
-```sh
-docker compose up --build
-```
+Serve over HTTPS or localhost with COOP same-origin, COEP require-corp, CORP same-origin, and application/wasm MIME. Supplied Vite/Nginx configurations provide these. New generated files must be included in the static-only service-worker manifest; API responses and credentials must never be cached.
 
-Frontend: http://127.0.0.1:4173. API: http://127.0.0.1:8081/healthz. Nginx proxies HTTP and WebSocket requests to the backend container. Compose builds `../oka-portfolio-api` and persists SQLite in the `chat-data` named volume. `docker compose down` preserves that volume; `down -v` removes demo history.
-
-## Checks
-
-```sh
-npm ci
-npm test
-```
-
-With both services running, exercise the actual frontend controllers and WebSocket proxy:
-
-```sh
-API_SMOKE_URL=http://127.0.0.1:4173 node --test tests/live-chat.test.mjs
-```
-
-This runs the DOM controllers against real sockets and SQLite; it does not replace visual browser QA.
-
-Backend checks, from its own repository:
-
-```sh
-go test -race ./...
-go vet ./...
-```
-
-Frontend tests cover algorithms, 8-Queens/reset behavior, API error paths, chat state/retry behavior, and DOM-level controllers. Backend tests include two real WebSocket clients, permissions, deduplication, SQLite persistence/expiry, and the existing Sudoku/cat checks. See the backend README and `docs/chat-protocol.md` for the network contract and resource limits.
-
-## Layout
-
-- `dist/`: deployable HTML/CSS, JavaScript modules, CV, and visual assets.
-- `scripts/dev.mjs`: local static server with HTTP/WebSocket proxy support.
-- `deploy/nginx.conf`, `Dockerfile`, `compose.yaml`: container setup.
-- `dist/local/`: SQLite repository, worker adapter, durable outbox projections and sync ownership.
-- `dist/sw.js`: generated static-only offline shell cache; a previously initialized demo can reopen with both services unavailable.
-- `tests/`: algorithm, SQLite, synchronization and UI regression tests.
-
-No backend code or database lives in this repository. The original `../sudoku-solver` project is unchanged. The chat demo is newly written and does not copy company source.
-
-## Portfolio content
-
-Review employment dates and certification names before publication. The recovered CV download may be older than the training section; replace `dist/Oka_Aryanata_CV.pdf` with your latest version. Original external project links may need updating. No remote or hosting deployment is configured here.
-
-## Local-first flow and verification
-
-```text
-A local SQLite transaction (message + outbox)
-  -> backend transaction (message + durable outcome)
-  -> B local SQLite transaction (received state)
-  -> B delivery acknowledgment
-```
-
-Queued means saved locally, Sending means prepared/in flight, Sent means persisted centrally, Delivered means persisted by the receiving client, and Read requires eligible viewing. Read and other message actions also persist locally before synchronization. Typing and presence remain transient and unknown offline.
-
-`npm test` uses actual file-backed SQLite through Node’s test-only adapter, including reopen/crash boundaries, quota/commit failure, pending-action projection, conflict review, recipient commit-before-ack, and multi-tab owner handover. It never substitutes that adapter in a browser. Live integration tests inject independent client SQLite files while exercising the real Go server and WebSocket proxy.
-
-Manual Chrome verification additionally covered real WASM/OPFS initialization for both accounts, offline send plus reload, full app reload with both preview services stopped, shared history in a second tab, sync-owner closure, and successful delivery after handover. The app warns before navigation while a local send/write is still uncommitted. Browser-managed storage is best effort; it is not a backup guarantee.
+The existing database schemas and network contracts are unchanged. The original `loan`, `user-svc`, and `sudoku-solver` repositories are references only. No Git remote or public deployment is configured by this change.
