@@ -199,11 +199,62 @@ function CatCard() {
     />
   );
 }
+function MarketplaceCard() {
+  return (
+    <ProjectCard
+      id="svaha-marketplace"
+      category="Service marketplace"
+      title="Svaha Marketplace"
+      badge="Coming soon"
+      description="Explore a prototype for discovering local services in Indonesia, from home cleaning to salon appointments."
+      visual={
+        <div className="marketplace-preview" aria-hidden="true">
+          <strong>Svaha Marketplace</strong>
+          <span className="marketplace-preview-search">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="10" cy="10" r="6" />
+              <path d="m15 15 5 5" />
+            </svg>
+            Cari layanan
+          </span>
+          <div className="marketplace-preview-categories">
+            <span>Bersih rumah</span>
+            <span>Servis AC</span>
+            <span>Salon</span>
+          </div>
+        </div>
+      }
+      actions={
+        <a className="button" href="marketplace/index.html">
+          Open marketplace preview
+        </a>
+      }
+    />
+  );
+}
+
+const projects = [
+  { card: () => <SimpleCard index={0} />, id: 'im-chat' },
+  { card: () => <SimpleCard index={1} /> },
+  { card: () => <SimpleCard index={2} /> },
+  { card: () => <SimpleCard index={3} /> },
+  { card: SudokuCard, id: 'sudoku' },
+  { card: CatCard, id: 'cat-gifs' },
+  { card: MarketplaceCard, id: 'svaha-marketplace' },
+];
+
 export function ProjectGallery() {
   const [narrow, setNarrow] = useState(() => matchMedia('(max-width: 900px)').matches),
     [page, setPage] = useState(0);
   const count = narrow ? 1 : 2,
-    pages = Math.ceil(6 / count);
+    pages = Math.ceil(projects.length / count);
   useEffect(() => {
     const media = matchMedia('(max-width: 900px)');
     const change = () => {
@@ -215,14 +266,7 @@ export function ProjectGallery() {
   }, []);
   useEffect(() => {
     const reveal = () => {
-      const index =
-        location.hash === '#cat-gifs'
-          ? 5
-          : location.hash === '#sudoku'
-            ? 4
-            : location.hash === '#im-chat'
-              ? 0
-              : -1;
+      const index = projects.findIndex((project) => project.id === location.hash.slice(1));
       if (index >= 0) setPage(Math.floor(index / count));
     };
     reveal();
@@ -230,6 +274,9 @@ export function ProjectGallery() {
     return () => window.removeEventListener('hashchange', reveal);
   }, [count]);
   const start = Math.min(page, pages - 1) * count;
+  const visibleProjects = projects.slice(start, start + count);
+  const range =
+    visibleProjects.length === 1 ? start + 1 : `${start + 1}–${start + visibleProjects.length}`;
   return (
     <section className="section" id="projects">
       <h2>Personal Projects</h2>
@@ -249,16 +296,9 @@ export function ProjectGallery() {
           ←
         </button>
         <div className="projects" id="project-cards">
-          {Array.from({ length: count }, (_, offset) => {
-            const index = start + offset;
-            return index < 4 ? (
-              <SimpleCard key={index} index={index} />
-            ) : index === 4 ? (
-              <SudokuCard key={index} />
-            ) : (
-              <CatCard key={index} />
-            );
-          })}
+          {visibleProjects.map(({ card: Card }, offset) => (
+            <Card key={start + offset} />
+          ))}
         </div>
         <button
           className="carousel-arrow"
@@ -271,7 +311,7 @@ export function ProjectGallery() {
         </button>
       </div>
       <p className="carousel-status" role="status">
-        Projects {start + 1}–{start + count} of 6
+        Projects {range} of {projects.length}
       </p>
     </section>
   );

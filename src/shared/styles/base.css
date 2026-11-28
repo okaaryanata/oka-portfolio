@@ -954,6 +954,55 @@ footer .wrap {
   }
 }
 
+.project-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+}
+
+.project-meta .location {
+  margin: 0;
+}
+
+.project-badge {
+  padding: 0.12rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--wash);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.marketplace-preview {
+  width: min(20rem, 90%);
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid #90ad9e;
+  border-radius: 1rem;
+  padding: 0.85rem;
+  background: #eff6f1;
+  color: #173e30;
+}
+
+.marketplace-preview-search,
+.marketplace-preview-categories span {
+  padding: 0.25rem 0.45rem;
+  border: 1px solid #b0c7ba;
+  border-radius: 0.4rem;
+  background: #fff;
+  font-size: 0.75rem;
+}
+
+.marketplace-preview-search,
+.marketplace-preview-categories {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
 .project-footer {
   margin-top: auto;
   display: grid;

@@ -169,7 +169,7 @@ test('booking confirms the first arrival and reset cancels pending claims', asyn
   }
 });
 for (const narrow of [false, true])
-  test(`all six gallery cards have the shared footer on ${narrow ? 'mobile' : 'desktop'}`, () => {
+  test(`all seven gallery cards have the shared footer on ${narrow ? 'mobile' : 'desktop'}`, () => {
     vi.stubGlobal(
       'matchMedia',
       vi.fn((query: string) => ({
@@ -180,9 +180,9 @@ for (const narrow of [false, true])
     );
     const { container } = render(<ProjectGallery />);
     const seen = new Set<string>();
-    for (let page = 0; page < 6; page++) {
+    for (let page = 0; page < 7; page++) {
       const cards = container.querySelectorAll('.project');
-      expect(cards).toHaveLength(narrow ? 1 : 2);
+      expect(cards).toHaveLength(narrow || page === 3 ? 1 : 2);
       for (const card of cards) {
         seen.add(card.querySelector('h3')!.textContent);
         expect(card.querySelector('.project-footer .actions')).not.toBeNull();
@@ -192,7 +192,14 @@ for (const narrow of [false, true])
       if (next.hasAttribute('disabled')) break;
       fireEvent.click(next);
     }
-    expect(seen.size).toBe(6);
+    expect(seen.size).toBe(7);
+    expect(screen.getByRole('heading', { name: 'Svaha Marketplace' })).toBeInTheDocument();
+    expect(screen.getByText('Coming soon')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open marketplace preview' })).toHaveAttribute(
+      'href',
+      'marketplace/index.html',
+    );
+    expect(screen.getByText('Projects 7 of 7')).toBeInTheDocument();
     expect(screen.queryByText('Original solver')).not.toBeInTheDocument();
     expect(screen.queryByText('Original collection')).not.toBeInTheDocument();
   });

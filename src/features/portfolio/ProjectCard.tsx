@@ -7,6 +7,7 @@ export function ProjectCard({
   visual,
   actions,
   status = '',
+  badge,
 }: {
   id?: string;
   category: string;
@@ -15,12 +16,16 @@ export function ProjectCard({
   visual: ReactNode;
   actions: ReactNode;
   status?: string;
+  badge?: string;
 }) {
   return (
     <article className="project" id={id}>
       <div className={'project-visual' + (id === 'cat-gifs' ? ' cat-visual' : '')}>{visual}</div>
       <div className="project-copy">
-        <p className="location">{category}</p>
+        <div className="project-meta">
+          <p className="location">{category}</p>
+          {badge && <span className="project-badge">{badge}</span>}
+        </div>
         <h3>{title}</h3>
         <p>{description}</p>
         <div className="project-footer">

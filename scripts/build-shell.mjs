@@ -4,6 +4,7 @@ const root = new URL('../dist/', import.meta.url);
 async function files(directory = '', result = []) {
   for (const item of await readdir(new URL(directory, root), { withFileTypes: true })) {
     const name = directory + item.name;
+    if (name === 'marketplace') continue;
     if (item.isDirectory()) await files(name + '/', result);
     else if (/\.(html|mjs|js|css|wasm|png|gif)$/.test(name) && name !== 'sw.js') result.push(name);
   }
